@@ -141,6 +141,7 @@ in {
               useSystemd = true;
               configuration = {
                 boot.tmpOnTmpfs = true;
+                system.nssModules = lib.mkForce [ ];
                 services.nginx = {
                   enable = true;
                   recommendedZstdSettings = true;
@@ -227,7 +228,6 @@ in {
                   };
                 };
               };
-              nssModules = lib.mkForce [ ];
               systemd.services.nginx.serviceConfig.AmbientCapabilities =
                 lib.mkForce [ "CAP_NET_BIND_SERVICE" ];
             };
