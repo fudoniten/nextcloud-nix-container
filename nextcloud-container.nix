@@ -6,6 +6,8 @@ let
 
   hostname = config.instance.hostname;
 
+  hostSecrets = config.fudo.secrets.host-secrets."${hostname}";
+
   mkEnvFile = envVars:
     let
       envLines =
