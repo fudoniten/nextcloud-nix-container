@@ -103,7 +103,7 @@ in {
       };
     };
 
-    virtualisation.ario.projects.nextcloud.settings = let
+    virtualisation.arion.projects.nextcloud.settings = let
       image = { ... }: {
         project.name = "nextcloud";
         services = {
