@@ -183,7 +183,7 @@ in {
                         "deny all;";
                       "~ ^/(?:.|autotest|occ|issue|indie|db_|console)".extraConfig =
                         "deny all;";
-                      "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+).php(?:$|/)".extaConfig =
+                      "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+).php(?:$|/)".extraConfig =
                         ''
                           fastcgi_split_path_info ^(.+?\.php)(\/.*|)$;
                           set $path_info $fastcgi_path_info;
