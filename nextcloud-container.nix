@@ -30,7 +30,6 @@ in {
     images = {
       nextcloud = mkOption { type = str; };
       postgres = mkOption { type = str; };
-      nginx = mkOption { type = str; };
     };
 
     uids = {
@@ -110,7 +109,7 @@ in {
           nextcloud.service = {
             image = cfg.images.nextcloud;
             restart = "always";
-            links = [ "mariadb" ];
+            links = [ "postgres" ];
             env_file = [ hostSecrets.nextcloudEnv.target-file ];
             volumes = [
               "${cfg.state-directory}/nextcloud:/var/www/html"
