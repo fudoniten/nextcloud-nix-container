@@ -152,7 +152,6 @@ in {
                   recommendedProxySettings = true;
                   upstreams.php-handler.extraConfig = "server nextcloud:9000;";
                   virtualHosts."localhost" = {
-                    listen = [{ port = 80; }];
                     extraConfig = ''
                       add_header Referrer-Policy "no-referrer" always;
                       add_header X-Content-Type-Options "nosniff" always;
