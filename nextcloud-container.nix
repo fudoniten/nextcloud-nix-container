@@ -239,6 +239,7 @@ in {
               links = [ "nextcloud" ];
               healthcheck = {
                 test = [
+                  "CMD"
                   ''
                     curl -sSf 'http://localhost/status.php' | grep '"installed":true' | grep '"maintenance":false' | grep '"needsDbUpgrade":false' || exit 1''
                 ];
