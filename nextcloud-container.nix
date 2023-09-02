@@ -127,7 +127,7 @@ in {
             volumes =
               [ "${cfg.state-directory}/postgres:/var/lib/postgresql/data" ];
             healthcheck = {
-              test = [ "CMD" "pg_isready" "-U" "authentik" "-d" "authentik" ];
+              test = [ "CMD" "pg_isready" "-U" "nextcloud" "-d" "nextcloud" ];
               start_period = "20s";
               interval = "30s";
               timeout = "3s";
@@ -179,7 +179,7 @@ in {
                           return =
                             "301 $scheme://$host:$server_port/remote.hph/dav";
                         };
-                        "/" = { extraConfig = "rewrite ^ /index.php"; };
+                        "/" = { extraConfig = "rewrite ^ /index.php;"; };
                         "~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/".extraConfig =
                           "deny all;";
                         "~ ^/(?:.|autotest|occ|issue|indie|db_|console)".extraConfig =
