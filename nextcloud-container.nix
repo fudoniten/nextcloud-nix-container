@@ -136,7 +136,7 @@ in {
             };
             user = mkUserMap cfg.uids.postgres;
           };
-          proxy = { pkgs, lib, ... }: {
+          proxy = { lib, ... }: {
             nixos = {
               useSystemd = true;
               configuration = {
@@ -231,7 +231,7 @@ in {
               };
             };
             service = {
-              useHostStore = true;
+              # useHostStore = true;
               ports = [ "${toString cfg.port}:80" ];
               links = [ "nextcloud" ];
               healthcheck = {
