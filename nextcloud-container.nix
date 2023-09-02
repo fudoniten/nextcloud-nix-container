@@ -144,86 +144,90 @@ in {
                 system.nssModules = lib.mkForce [ ];
                 systemd.services.nginx.serviceConfig.AmbientCapabilities =
                   lib.mkForce [ "CAP_NET_BIND_SERVICE" ];
-                services.nginx = {
-                  enable = true;
-                  recommendedZstdSettings = true;
-                  recommendedOptimisation = true;
-                  recommendedGzipSettings = true;
-                  recommendedProxySettings = true;
-                  upstreams.php-handler.extraConfig = "server nextcloud:9000;";
-                  virtualHosts."localhost" = {
-                    extraConfig = ''
-                      add_header Referrer-Policy "no-referrer" always;
-                      add_header X-Content-Type-Options "nosniff" always;
-                      add_header X-Download-Options "noopen" always;
-                      add_header X-Frame-Options "SAMEORIGIN" always;
-                      add_header X-Permitted-Cross-Domain-Policies "none" always;
-                      add_header X-Robots-Tag "none" always;
-                      add_header X-XSS-Protection "1; mode=block" always;
-                      fastcgi_hide_header X-Powered-By;
-                      client_max_body_size 10G;
-                      fastcgi_buffers 64 4K;
-                    '';
-                    locations = {
-                      "/robots.txt".extraConfig = ''
-                        allow all;
-                        log_not_found off;
-                        access_log off;
+                services = {
+                  nscd.enable = false;
+                  nginx = {
+                    enable = true;
+                    recommendedZstdSettings = true;
+                    recommendedOptimisation = true;
+                    recommendedGzipSettings = true;
+                    recommendedProxySettings = true;
+                    upstreams.php-handler.extraConfig =
+                      "server nextcloud:9000;";
+                    virtualHosts."localhost" = {
+                      extraConfig = ''
+                        add_header Referrer-Policy "no-referrer" always;
+                        add_header X-Content-Type-Options "nosniff" always;
+                        add_header X-Download-Options "noopen" always;
+                        add_header X-Frame-Options "SAMEORIGIN" always;
+                        add_header X-Permitted-Cross-Domain-Policies "none" always;
+                        add_header X-Robots-Tag "none" always;
+                        add_header X-XSS-Protection "1; mode=block" always;
+                        fastcgi_hide_header X-Powered-By;
+                        client_max_body_size 10G;
+                        fastcgi_buffers 64 4K;
                       '';
-                      "/.well-known/carddav" = {
-                        return =
-                          "301 $scheme://$host:$server_port/remote.hph/dav";
-                      };
-                      "/.well-known/caldav" = {
-                        return =
-                          "301 $scheme://$host:$server_port/remote.hph/dav";
-                      };
-                      "/" = { extraConfig = "rewrite ^ /index.php"; };
-                      "~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/".extraConfig =
-                        "deny all;";
-                      "~ ^/(?:.|autotest|occ|issue|indie|db_|console)".extraConfig =
-                        "deny all;";
-                      "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+).php(?:$|/)".extraConfig =
-                        ''
-                          fastcgi_split_path_info ^(.+?\.php)(\/.*|)$;
-                          set $path_info $fastcgi_path_info;
-                          try_files $fastcgi_script_name =404;
-                          include fastcgi_params;
-                          fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-                          fastcgi_param PATH_INFO $path_info;
-                          # fastcgi_param HTTPS on;
-
-                          # Avoid sending the security headers twice
-                          fastcgi_param modHeadersAvailable true;
-
-                          # Enable pretty urls
-                          fastcgi_param front_controller_active true;
-                          fastcgi_pass php-handler;
-                          fastcgi_intercept_errors on;
-                          fastcgi_request_buffering off;
-                        '';
-                      "~ ^/(?:updater|oc[ms]-provider)(?:$|/)" = {
-                        index = "index.php";
-                        tryFiles = "$uri/ =404";
-                      };
-
-                      "~ .(?:css|js|woff2?|svg|gif|map)$" = {
-                        tryFiles = "$uri /index.php$request_uri";
-                        extraConfig = ''
-                          add_header Cache-Control "public, max-age=15778463";
-                          add_header Referrer-Policy "no-referrer" always;
-                          add_header X-Content-Type-Options "nosniff" always;
-                          add_header X-Download-Options "noopen" always;
-                          add_header X-Frame-Options "SAMEORIGIN" always;
-                          add_header X-Permitted-Cross-Domain-Policies "none" always;
-                          add_header X-Robots-Tag "none" always;
-                          add_header X-XSS-Protection "1; mode=block" always;
+                      locations = {
+                        "/robots.txt".extraConfig = ''
+                          allow all;
+                          log_not_found off;
                           access_log off;
                         '';
-                      };
-                      "~ .(?:png|html|ttf|ico|jpg|jpeg|bcmap|mp4|webm)$" = {
-                        tryFiles = "$uri /index.php$request_uri";
-                        extraConfig = "access_log off;";
+                        "/.well-known/carddav" = {
+                          return =
+                            "301 $scheme://$host:$server_port/remote.hph/dav";
+                        };
+                        "/.well-known/caldav" = {
+                          return =
+                            "301 $scheme://$host:$server_port/remote.hph/dav";
+                        };
+                        "/" = { extraConfig = "rewrite ^ /index.php"; };
+                        "~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/".extraConfig =
+                          "deny all;";
+                        "~ ^/(?:.|autotest|occ|issue|indie|db_|console)".extraConfig =
+                          "deny all;";
+                        "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+).php(?:$|/)".extraConfig =
+                          ''
+                            fastcgi_split_path_info ^(.+?\.php)(\/.*|)$;
+                            set $path_info $fastcgi_path_info;
+                            try_files $fastcgi_script_name =404;
+                            include fastcgi_params;
+                            fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+                            fastcgi_param PATH_INFO $path_info;
+                            # fastcgi_param HTTPS on;
+
+                            # Avoid sending the security headers twice
+                            fastcgi_param modHeadersAvailable true;
+
+                            # Enable pretty urls
+                            fastcgi_param front_controller_active true;
+                            fastcgi_pass php-handler;
+                            fastcgi_intercept_errors on;
+                            fastcgi_request_buffering off;
+                          '';
+                        "~ ^/(?:updater|oc[ms]-provider)(?:$|/)" = {
+                          index = "index.php";
+                          tryFiles = "$uri/ =404";
+                        };
+
+                        "~ .(?:css|js|woff2?|svg|gif|map)$" = {
+                          tryFiles = "$uri /index.php$request_uri";
+                          extraConfig = ''
+                            add_header Cache-Control "public, max-age=15778463";
+                            add_header Referrer-Policy "no-referrer" always;
+                            add_header X-Content-Type-Options "nosniff" always;
+                            add_header X-Download-Options "noopen" always;
+                            add_header X-Frame-Options "SAMEORIGIN" always;
+                            add_header X-Permitted-Cross-Domain-Policies "none" always;
+                            add_header X-Robots-Tag "none" always;
+                            add_header X-XSS-Protection "1; mode=block" always;
+                            access_log off;
+                          '';
+                        };
+                        "~ .(?:png|html|ttf|ico|jpg|jpeg|bcmap|mp4|webm)$" = {
+                          tryFiles = "$uri /index.php$request_uri";
+                          extraConfig = "access_log off;";
+                        };
                       };
                     };
                   };
