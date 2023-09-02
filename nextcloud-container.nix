@@ -111,7 +111,6 @@ in {
           nextcloud.service = {
             image = cfg.images.nextcloud;
             restart = "always";
-            links = [ "postgres" ];
             env_file = [ hostSecrets.nextcloudEnv.target-file ];
             volumes = [
               "${cfg.state-directory}/nextcloud:/var/www/html"
@@ -236,7 +235,6 @@ in {
             service = {
               # useHostStore = true;
               ports = [ "${toString cfg.port}:80" ];
-              links = [ "nextcloud" ];
               healthcheck = {
                 test = [
                   "CMD"
