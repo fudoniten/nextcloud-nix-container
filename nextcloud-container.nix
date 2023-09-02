@@ -148,7 +148,6 @@ in {
                   nscd.enable = false;
                   nginx = {
                     enable = true;
-                    recommendedZstdSettings = true;
                     recommendedOptimisation = true;
                     recommendedGzipSettings = true;
                     recommendedProxySettings = true;
