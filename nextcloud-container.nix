@@ -184,7 +184,7 @@ in {
                           "deny all;";
                         "~ ^/(?:.|autotest|occ|issue|indie|db_|console)".extraConfig =
                           "deny all;";
-                        "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+).php(?:$|/)" =
+                        "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+)\\.php(?:$|/)" =
                           {
                             fastcgiParams = {
                               SCRIPT_FILENAME =
@@ -194,7 +194,7 @@ in {
                               front_controller_active = "true";
                             };
                             extraConfig = ''
-                              fastcgi_split_path_info ^(.+?\.php)(\/.*|)$;
+                              fastcgi_split_path_info ^(.+?\\.php)(\\/.*|)$;
                               set $path_info $fastcgi_path_info;
                               try_files $fastcgi_script_name =404;
 
