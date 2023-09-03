@@ -190,8 +190,8 @@ in {
                               SCRIPT_FILENAME =
                                 "$document_root$fastcgi_script_name";
                               PATH_INFO = "$path_info";
-                              modHeadersAvailable = true;
-                              front_controller_active = true;
+                              modHeadersAvailable = "true";
+                              front_controller_active = "true";
                             };
                             extraConfig = ''
                               fastcgi_split_path_info ^(.+?\.php)(\/.*|)$;
