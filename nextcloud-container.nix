@@ -29,9 +29,20 @@ in {
       description = "Directory at which to store server state data.";
     };
 
-    images = {
-      nextcloud = mkOption { type = str; };
-      postgres = mkOption { type = str; };
+    hostname = mkOption {
+      type = str;
+      description = "Hostname at which the server is available.";
+    };
+
+    package = mkOption {
+      type = package;
+      description = "NextCloud package to use.";
+    };
+
+    extra-apps = mkOption {
+      type = listOf package;
+      description = "List of other apps to enable.";
+      default = [ ];
     };
 
     uids = {
@@ -39,6 +50,7 @@ in {
         type = int;
         default = 740;
       };
+
       postgres = mkOption {
         type = int;
         default = 741;
@@ -60,14 +72,10 @@ in {
   config = mkIf cfg.enable {
     systemd = {
       tmpfiles.rules = [
-        "d ${cfg.state-directory}/nextcloud  0700 nextcloud          root - -"
-        "d ${cfg.state-directory}/data       0700 nextcloud          root - -"
-        "d ${cfg.state-directory}/postgres   0700 nextcloud-postgres root - -"
+        "d ${cfg.state-directory}/home     0700 nextcloud root - -"
+        "d ${cfg.state-directory}/data     0700 nextcloud root - -"
+        "d ${cfg.state-directory}/postgres 0700 nextcloud root - -"
       ];
-      services.arion-nextcloud = {
-        after = [ "network-online.target" ];
-        requires = [ "network-online.target" ];
-      };
     };
 
     users.users = {
@@ -76,31 +84,14 @@ in {
         group = "nextcloud";
         uid = cfg.uids.nextcloud;
       };
-      nextcloud-postgres = {
-        isSystemUser = true;
-        group = "nextcloud";
-        uid = cfg.uids.postgres;
-      };
     };
 
     fudo.secrets.host-secrets."${hostname}" = {
-      nextcloudEnv = {
-        source-file = mkEnvFile {
-          POSTGRES_HOST = "postgres";
-          POSTGRES_DB = "nextcloud";
-          POSTGRES_USER = "nextcloud";
-          POSTGRES_PASSWORD = readFile postgresPasswdFile;
-          TZ = cfg.timezone;
-        };
-        target-file = "/run/nextcloud/nextcloud.env";
-      };
-      nextcloudPostgresEnv = {
-        source-file = mkEnvFile {
-          POSTGRES_DB = "nextcloud";
-          POSTGRES_USER = "nextcloud";
-          POSTGRES_PASSWORD = readFile postgresPasswdFile;
-        };
-        target-file = "/run/nextcloud/postgres.env";
+      nextcloudAdminPasswd = {
+        source-file =
+          pkgs.lib.passwd.stablerandom-passwd-file "nextcloud-admin-passwd"
+          config.instance.build-seed;
+        target-file = "/run/nextcloud/admin.passwd";
       };
     };
 
@@ -108,146 +99,45 @@ in {
       image = { ... }: {
         project.name = "nextcloud";
         services = {
-          nextcloud.service = {
-            image = cfg.images.nextcloud;
-            restart = "always";
-            env_file = [ hostSecrets.nextcloudEnv.target-file ];
-            volumes = [
-              "${cfg.state-directory}/nextcloud:/var/www/html"
-              "${cfg.state-directory}/data:/data"
-            ];
-            user = mkUserMap cfg.uids.nextcloud;
-            depends_on = [ "postgres" ];
-          };
-          postgres.service = {
-            image = cfg.images.postgres;
-            restart = "always";
-            command = "-c 'max_connections=300'";
-            env_file = [ hostSecrets.nextcloudPostgresEnv.target-file ];
-            volumes =
-              [ "${cfg.state-directory}/postgres:/var/lib/postgresql/data" ];
-            healthcheck = {
-              test = [ "CMD" "pg_isready" "-U" "nextcloud" "-d" "nextcloud" ];
-              start_period = "20s";
-              interval = "30s";
-              timeout = "3s";
-              retries = 5;
-            };
-            user = mkUserMap cfg.uids.postgres;
-          };
-          proxy = { lib, ... }: {
+          nextcloud = { pkgs, lib, ... }: {
             nixos = {
               useSystemd = true;
               configuration = {
                 boot.tmpOnTmpfs = true;
                 system.nssModules = lib.mkForce [ ];
-                systemd.services.nginx.serviceConfig.AmbientCapabilities =
-                  lib.mkForce [ "CAP_NET_BIND_SERVICE" ];
                 services = {
                   nscd.enable = false;
-                  nginx = {
+                  postgresql.enable = true;
+                  nextcloud = {
                     enable = true;
-                    recommendedOptimisation = true;
-                    recommendedGzipSettings = true;
-                    recommendedProxySettings = true;
-                    upstreams.php-handler.extraConfig =
-                      "server nextcloud:9000;";
-                    virtualHosts."localhost" = {
-                      extraConfig = ''
-                        add_header Referrer-Policy "no-referrer" always;
-                        add_header X-Content-Type-Options "nosniff" always;
-                        add_header X-Download-Options "noopen" always;
-                        add_header X-Frame-Options "SAMEORIGIN" always;
-                        add_header X-Permitted-Cross-Domain-Policies "none" always;
-                        add_header X-Robots-Tag "none" always;
-                        add_header X-XSS-Protection "1; mode=block" always;
-                        fastcgi_hide_header X-Powered-By;
-                        client_max_body_size 10G;
-                        fastcgi_buffers 64 4K;
-                      '';
-                      locations = {
-                        "/robots.txt".extraConfig = ''
-                          allow all;
-                          log_not_found off;
-                          access_log off;
-                        '';
-                        "/.well-known/carddav" = {
-                          return =
-                            "301 $scheme://$host:$server_port/remote.hph/dav";
-                        };
-                        "/.well-known/caldav" = {
-                          return =
-                            "301 $scheme://$host:$server_port/remote.hph/dav";
-                        };
-                        "/" = { extraConfig = "rewrite ^ /index.php;"; };
-                        "~ ^/(?:build|tests|config|lib|3rdparty|templates|data)/".extraConfig =
-                          "deny all;";
-                        "~ ^/(?:.|autotest|occ|issue|indie|db_|console)".extraConfig =
-                          "deny all;";
-                        "~ ^/(?:index|remote|public|cron|core/ajax/update|status|ocs/v[12]|updater/.+|oc[ms]-provider/.+)\\.php(?:$|/)" =
-                          {
-                            fastcgiParams = {
-                              SCRIPT_FILENAME =
-                                "$document_root$fastcgi_script_name";
-                              PATH_INFO = "$path_info";
-                              modHeadersAvailable = "true";
-                              front_controller_active = "true";
-                            };
-                            extraConfig = ''
-                              fastcgi_split_path_info ^(.+?\\.php)(\\/.*|)$;
-                              set $path_info $fastcgi_path_info;
-                              try_files $fastcgi_script_name =404;
-
-                              # Enable pretty urls
-                              fastcgi_pass php-handler;
-                              fastcgi_intercept_errors on;
-                              fastcgi_request_buffering off;
-                            '';
-                          };
-                        "~ ^/(?:updater|oc[ms]-provider)(?:$|/)" = {
-                          index = "index.php";
-                          tryFiles = "$uri/ =404";
-                        };
-
-                        "~ .(?:css|js|woff2?|svg|gif|map)$" = {
-                          tryFiles = "$uri /index.php$request_uri";
-                          extraConfig = ''
-                            add_header Cache-Control "public, max-age=15778463";
-                            add_header Referrer-Policy "no-referrer" always;
-                            add_header X-Content-Type-Options "nosniff" always;
-                            add_header X-Download-Options "noopen" always;
-                            add_header X-Frame-Options "SAMEORIGIN" always;
-                            add_header X-Permitted-Cross-Domain-Policies "none" always;
-                            add_header X-Robots-Tag "none" always;
-                            add_header X-XSS-Protection "1; mode=block" always;
-                            access_log off;
-                          '';
-                        };
-                        "~ .(?:png|html|ttf|ico|jpg|jpeg|bcmap|mp4|webm)$" = {
-                          tryFiles = "$uri /index.php$request_uri";
-                          extraConfig = "access_log off;";
-                        };
-                      };
+                    package = cfg.package;
+                    hostName = cfg.hostname;
+                    home = "/var/lib/nextcloud/home";
+                    datadir = "/var/lib/nextcloud/data";
+                    configureRedis = true;
+                    extraAppsEnable = true;
+                    extraApps = cfg.extra-apps;
+                    enableBrokenCiphersForSSE = false;
+                    database.createLocally = true;
+                    config = {
+                      dbtype = "pgsql";
+                      adminpassFile = "/run/nextcloud/admin.passwd";
                     };
                   };
                 };
               };
             };
             service = {
-              # useHostStore = true;
-              ports = [ "${toString cfg.port}:80" ];
-              healthcheck = {
-                test = [
-                  "CMD"
-                  ''
-                    curl -sSf 'http://localhost/status.php' | grep '"installed":true' | grep '"maintenance":false' | grep '"needsDbUpgrade":false' || exit 1''
-                ];
-                start_period = "20s";
-                interval = "30s";
-                timeout = "3s";
-                retries = 5;
-              };
-              depends_on = [ "nextcloud" ];
+              restart = "always";
+              volumes = [
+                "${cfg.state-directory}/home:/var/lib/nextcloud/home"
+                "${cfg.state-directory}/data:/var/lib/nextcloud/data"
+                "${hostSecrets.nextcloudAdminPasswd.target-file}:/run/nextcloud/admin.passwd:ro,Z"
+                "${cfg.state-directory}/postgres:/var/lib/postgresql/data"
+              ];
+              user = mkUserMap cfg.uids.nextcloud;
+              depends_on = [ "postgres" ];
+              ports = [ "${cfg.port}:80" ];
             };
           };
         };
