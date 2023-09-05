@@ -137,7 +137,7 @@ in {
               ];
               user = mkUserMap cfg.uids.nextcloud;
               depends_on = [ "postgres" ];
-              ports = [ "${cfg.port}:80" ];
+              ports = [ "${toString cfg.port}:80" ];
             };
           };
         };
