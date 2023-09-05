@@ -117,7 +117,7 @@ in {
             };
           };
         };
-        volumes = {
+        docker-compose.volumes = {
           postgres-data = { };
           nextcloud-data = { };
           nextcloud-home = { };
