@@ -83,6 +83,11 @@ in {
               configuration = {
                 boot.tmpOnTmpfs = true;
                 system.nssModules = lib.mkForce [ ];
+                environment.etc."nextcloud/admin.passwd" = {
+                  source = "/run/nextcloud/admin.passwd";
+                  mode = "0400";
+                  user = "nextcloud";
+                };
                 services = {
                   nscd.enable = false;
                   postgresql.enable = true;
@@ -99,7 +104,7 @@ in {
                     database.createLocally = true;
                     config = {
                       dbtype = "pgsql";
-                      adminpassFile = "/run/nextcloud/admin.passwd";
+                      adminpassFile = "/etc/nextcloud/admin.passwd";
                     };
                   };
                 };
