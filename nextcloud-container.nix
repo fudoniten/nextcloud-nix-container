@@ -135,7 +135,7 @@ in {
                 "${hostSecrets.nextcloudAdminPasswd.target-file}:/run/nextcloud/admin.passwd:ro,Z"
                 "${cfg.state-directory}/postgres:/var/lib/postgresql/data"
               ];
-              # user = mkUserMap cfg.uids.nextcloud;
+              user = mkUserMap cfg.uids.nextcloud;
               ports = [ "${toString cfg.port}:80" ];
             };
           };
