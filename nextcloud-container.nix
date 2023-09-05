@@ -136,7 +136,6 @@ in {
                 "${cfg.state-directory}/postgres:/var/lib/postgresql/data"
               ];
               user = mkUserMap cfg.uids.nextcloud;
-              depends_on = [ "postgres" ];
               ports = [ "${toString cfg.port}:80" ];
             };
           };
