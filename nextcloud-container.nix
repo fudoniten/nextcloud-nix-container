@@ -40,9 +40,9 @@ in {
     };
 
     extra-apps = mkOption {
-      type = listOf package;
+      type = attrsOf package;
       description = "List of other apps to enable.";
-      default = [ ];
+      default = { };
     };
 
     uids = {
