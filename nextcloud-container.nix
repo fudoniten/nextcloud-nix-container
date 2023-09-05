@@ -133,7 +133,7 @@ in {
                 "${cfg.state-directory}/home:/var/lib/nextcloud/home"
                 "${cfg.state-directory}/data:/var/lib/nextcloud/data"
                 "${hostSecrets.nextcloudAdminPasswd.target-file}:/run/nextcloud/admin.passwd:ro,Z"
-                "${cfg.state-directory}/postgres:/var/lib/postgresql/data"
+                "${cfg.state-directory}/postgres:/var/lib/postgresql"
               ];
               user = mkUserMap cfg.uids.nextcloud;
               ports = [ "${toString cfg.port}:80" ];
