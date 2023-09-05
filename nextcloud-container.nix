@@ -14,8 +14,6 @@ let
         mapAttrsToList (var: val: ''${var}="${toString val}"'') envVars;
     in pkgs.writeText "envFile" (concatStringsSep "\n" envLines);
 
-  mkUserMap = uid: "${toString uid}:${toString uid}";
-
   postgresPasswdFile =
     pkgs.lib.passwd.stablerandom-passwd-file "nextcloud-postgres-passwd"
     config.instance.build-seed;
@@ -45,18 +43,6 @@ in {
       default = { };
     };
 
-    uids = {
-      nextcloud = mkOption {
-        type = int;
-        default = 740;
-      };
-
-      postgres = mkOption {
-        type = int;
-        default = 741;
-      };
-    };
-
     port = mkOption {
       type = port;
       description = "Intenal port on which to listen for requests.";
@@ -70,21 +56,13 @@ in {
   };
 
   config = mkIf cfg.enable {
-    systemd = {
-      tmpfiles.rules = [
-        "d ${cfg.state-directory}/home     0700 nextcloud root - -"
-        "d ${cfg.state-directory}/data     0700 nextcloud root - -"
-        "d ${cfg.state-directory}/postgres 0700 nextcloud root - -"
-      ];
-    };
-
-    users.users = {
-      nextcloud = {
-        isSystemUser = true;
-        group = "nextcloud";
-        uid = cfg.uids.nextcloud;
-      };
-    };
+    # systemd = {
+    #   tmpfiles.rules = [
+    #     "d ${cfg.state-directory}/home     0700 root root - -"
+    #     "d ${cfg.state-directory}/data     0700 root root - -"
+    #     "d ${cfg.state-directory}/postgres 0700 root root - -"
+    #   ];
+    # };
 
     fudo.secrets.host-secrets."${hostname}" = {
       nextcloudAdminPasswd = {
@@ -130,15 +108,19 @@ in {
             service = {
               restart = "always";
               volumes = [
-                "${cfg.state-directory}/home:/var/lib/nextcloud/home"
-                "${cfg.state-directory}/data:/var/lib/nextcloud/data"
+                "nextcloud-home:/var/lib/nextcloud/home"
+                "nextcloud-data:/var/lib/nextcloud/data"
                 "${hostSecrets.nextcloudAdminPasswd.target-file}:/run/nextcloud/admin.passwd:ro,Z"
-                "${cfg.state-directory}/postgres:/var/lib/postgresql"
+                "postgres-data:/var/lib/postgresql"
               ];
-              user = mkUserMap cfg.uids.nextcloud;
               ports = [ "${toString cfg.port}:80" ];
             };
           };
+        };
+        volumes = {
+          postgres-data = { };
+          nextcloud-data = { };
+          nextcloud-home = { };
         };
       };
     in { imports = [ image ]; };
