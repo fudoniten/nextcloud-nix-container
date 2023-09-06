@@ -82,8 +82,8 @@ in {
                 };
                 systemd.tmpfiles.rules = [
                   "d /var/lib/nextcloud/data 0700 nextcloud root - -"
-                  "d /var/lib/nextcloud/data/config 0700 nextcloud root - -"
-                  "d /var/lib/nextcloud/home 0700 nextcloud root - -"
+                  "d /var/lib/nextcloud/data/config 700 nextcloud root - -"
+                  "d /var/lib/nextcloud/home 0755 nextcloud root - -"
                 ];
                 services = {
                   nscd.enable = false;
