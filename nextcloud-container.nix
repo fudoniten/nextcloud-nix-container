@@ -112,6 +112,8 @@ in {
                       overwriteProtocol = "https";
                       extraTrustedDomains = [ "nextcloud.fudo.org" ];
                       defaultPhoneRegion = "CA";
+                      # TODO: is there a way to narrow this?
+                      trustedProxies = [ "10.0.0.0/8" ];
                     };
                   };
                 };
