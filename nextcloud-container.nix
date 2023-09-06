@@ -101,7 +101,7 @@ in {
                     autoUpdateApps.enable = true;
                     appstoreEnable = false;
                     enableBrokenCiphersForSSE = false;
-                    enableImageMagick = true;
+                    enableImagemagick = true;
                     database.createLocally = true;
                     nginx.recommendedHttpHeaders = true;
                     maxUploadSize = "4G";
