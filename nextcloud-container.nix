@@ -56,14 +56,6 @@ in {
   };
 
   config = mkIf cfg.enable {
-    # systemd = {
-    #   tmpfiles.rules = [
-    #     "d ${cfg.state-directory}/home     0700 root root - -"
-    #     "d ${cfg.state-directory}/data     0700 root root - -"
-    #     "d ${cfg.state-directory}/postgres 0700 root root - -"
-    #   ];
-    # };
-
     fudo.secrets.host-secrets."${hostname}" = {
       nextcloudAdminPasswd = {
         source-file =
@@ -88,6 +80,11 @@ in {
                   mode = "0400";
                   user = "nextcloud";
                 };
+                systemd.tmpfiles.rules = [
+                  "d /var/lib/nextcloud/data 0700 nextcloud root - -"
+                  "d /var/lib/nextcloud/data/config 0700 nextcloud root - -"
+                  "d /var/lib/nextcloud/home 0700 nextcloud root - -"
+                ];
                 services = {
                   nscd.enable = false;
                   postgresql.enable = true;
