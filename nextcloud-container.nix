@@ -94,14 +94,24 @@ in {
                     hostName = cfg.hostname;
                     home = "/var/lib/nextcloud/home";
                     datadir = "/var/lib/nextcloud/data";
+                    webfinger = true;
                     configureRedis = true;
                     extraAppsEnable = true;
                     extraApps = cfg.extra-apps;
+                    autoUpdateApps.enable = true;
+                    appstoreEnable = false;
                     enableBrokenCiphersForSSE = false;
+                    enableImageMagick = true;
                     database.createLocally = true;
+                    nginx.recommendedHttpHeaders = true;
+                    maxUploadSize = "4G";
+                    https = true;
                     config = {
                       dbtype = "pgsql";
                       adminpassFile = "/etc/nextcloud/admin.passwd";
+                      overwriteProtocol = "https";
+                      extraTrustedDomains = [ "nextcloud.fudo.org" ];
+                      defaultPhoneRegion = "CA";
                     };
                   };
                 };
