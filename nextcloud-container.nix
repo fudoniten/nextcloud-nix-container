@@ -100,7 +100,6 @@ in {
                     extraApps = cfg.extra-apps;
                     autoUpdateApps.enable = true;
                     appstoreEnable = false;
-                    enableBrokenCiphersForSSE = false;
                     enableImagemagick = true;
                     database.createLocally = true;
                     nginx.recommendedHttpHeaders = true;
