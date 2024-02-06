@@ -27,6 +27,12 @@ in {
       description = "Directory at which to store server state data.";
     };
 
+    store-directory = mkOption {
+      type = str;
+      description =
+        "Directory at which to store bulk cloud data (eg pictures).";
+    };
+
     hostname = mkOption {
       type = str;
       description = "Hostname at which the server is available.";
@@ -56,6 +62,12 @@ in {
   };
 
   config = mkIf cfg.enable {
+    systemd.tmpfiles.rules = [
+      "d ${cfg.state-directory}/nextcloud 0750 root root - -"
+      "d ${cfg.state-directory}/postgres 0750 root root - -"
+      "d ${cfg.store-directory} 0750 root root - -"
+    ];
+
     fudo.secrets.host-secrets."${hostname}" = {
       nextcloudAdminPasswd = {
         source-file =
@@ -131,9 +143,18 @@ in {
           };
         };
         docker-compose.volumes = {
-          postgres-data = { };
-          nextcloud-data = { };
-          nextcloud-home = { };
+          postgres-data = {
+            driver = "local";
+            driver_opts.device = "${cfg.state-directory}/postgresql";
+          };
+          nextcloud-data = {
+            driver = "local";
+            driver_opts.device = cfg.store-directory;
+          };
+          nextcloud-home = {
+            driver = "local";
+            driver_opts.device = "${cfg.state-directory}/nextcloud";
+          };
         };
       };
     in { imports = [ image ]; };
