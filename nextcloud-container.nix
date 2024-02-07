@@ -133,27 +133,13 @@ in {
             service = {
               restart = "always";
               volumes = [
-                "nextcloud-home:/var/lib/nextcloud/home"
-                "nextcloud-data:/var/lib/nextcloud/data"
+                "${cfg.state-directory}/nextcloud:/var/lib/nextcloud/home"
+                "${cfg.store-directory}:/var/lib/nextcloud/data"
                 "${hostSecrets.nextcloudAdminPasswd.target-file}:/run/nextcloud/admin.passwd:ro,Z"
-                "postgres-data:/var/lib/postgresql"
+                "${cfg.state-directory}/postgresql:/var/lib/postgresql"
               ];
               ports = [ "${toString cfg.port}:80" ];
             };
-          };
-        };
-        docker-compose.volumes = {
-          postgres-data = {
-            driver = "local";
-            driver_opts.device = "${cfg.state-directory}/postgresql";
-          };
-          nextcloud-data = {
-            driver = "local";
-            driver_opts.device = cfg.store-directory;
-          };
-          nextcloud-home = {
-            driver = "local";
-            driver_opts.device = "${cfg.state-directory}/nextcloud";
           };
         };
       };
